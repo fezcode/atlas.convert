@@ -8,6 +8,7 @@ import (
 	"image/jpeg"
 	"image/png"
 	"os"
+	"path/filepath"
 	"strings"
 
 	_ "github.com/gen2brain/heic"
@@ -67,6 +68,8 @@ func main() {
 			fmt.Printf("Error: %v\n", err)
 			os.Exit(1)
 		}
+		absPath, _ := filepath.Abs(config.Destination)
+		fmt.Printf("Conversion successful: %s\n", absPath)
 	}
 }
 
@@ -107,7 +110,8 @@ func runInteractive(config *Config) {
 	if err != nil {
 		fmt.Printf("Error during conversion: %v\n", err)
 	} else {
-		fmt.Println("Conversion successful!")
+		absPath, _ := filepath.Abs(config.Destination)
+		fmt.Printf("Conversion successful: %s\n", absPath)
 	}
 }
 
