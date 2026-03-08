@@ -1,0 +1,18 @@
+# Binaries and build artifacts
+build/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Gobake temporary files
+.gobake/
+
+# IDEs
+.idea/
+.vscode/
+
+# Dependencies
+# go.sum is usually committed, but vendor/ is not
+vendor/

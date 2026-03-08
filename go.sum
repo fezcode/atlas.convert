@@ -1,0 +1,8 @@
+github.com/adrium/goheif v0.0.0-20230113233934-ca402e77a786 h1:zvgtcRb2B5gynWjm+Fc9oJZPHXwmcgyH0xCcNm6Rmo4=
+github.com/adrium/goheif v0.0.0-20230113233934-ca402e77a786/go.mod h1:aKVJoQ0cc9K5Xb058XSnnAxXLliR97qbSqWBlm5ca1E=
+github.com/fezcode/go-piml v1.2.1 h1:IW71Q6vEjyzpkeMvV1wkgP8w/ucObXXF5WDEaadMQSE=
+github.com/fezcode/go-piml v1.2.1/go.mod h1:GbFMPCBsrUoNZnG3JzTr7BwbIeMucPs70LuvkgxJYdQ=
+github.com/fezcode/gobake v0.3.0 h1:wYw1EXHoUjpYXzG7MUgE5ohKxZ+XXYu2Vdf5wsKhKE8=
+github.com/fezcode/gobake v0.3.0/go.mod h1:xLBhJdcq4K9Fv2rV+hlTXnUa9sB7q/qHQfQlqfmQuWo=
+github.com/rwcarlsen/goexif v0.0.0-20190401172101-9e8deecbddbd h1:CmH9+J6ZSsIjUK3dcGsnCnO41eRBOnY12zwkn5qVwgc=
+github.com/rwcarlsen/goexif v0.0.0-20190401172101-9e8deecbddbd/go.mod h1:hPqNNc0+uJM6H+SuU8sEs5K5IQeKccPqeSjfgcKGgPk=
