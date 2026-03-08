@@ -10,7 +10,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/adrium/goheif"
+	_ "github.com/gen2brain/heic"
 )
 
 var Version = "dev"
@@ -118,22 +118,10 @@ func convert(config Config) error {
 	}
 	defer srcFile.Close()
 
-	var img image.Image
-	from := strings.ToLower(config.From)
-	
-	switch from {
-	case "jpeg", "jpg":
-		img, err = jpeg.Decode(srcFile)
-	case "png":
-		img, err = png.Decode(srcFile)
-	case "heic":
-		img, err = goheif.Decode(srcFile)
-	default:
-		return fmt.Errorf("unsupported source format: %s", from)
-	}
-
+	// Using image.Decode which uses registered decoders (including gen2brain/heic)
+	img, _, err := image.Decode(srcFile)
 	if err != nil {
-		return fmt.Errorf("failed to decode %s: %w", from, err)
+		return fmt.Errorf("failed to decode image: %w", err)
 	}
 
 	destFile, err := os.Create(config.Destination)
