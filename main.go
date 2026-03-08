@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	_ "github.com/gen2brain/heic"
 )
@@ -27,17 +28,17 @@ type Config struct {
 func main() {
 	config := Config{}
 
-	flag.StringVar(&config.Source, "s", "", "Source media path")
-	flag.StringVar(&config.Source, "source", "", "Source media path")
-	flag.StringVar(&config.Destination, "d", "", "Destination path")
-	flag.StringVar(&config.Destination, "destination", "", "Destination path")
+	flag.StringVar(&config.Source, "s", "", "Source media path (supports globs like *.heic)")
+	flag.StringVar(&config.Source, "source", "", "Source media path (supports globs like *.heic)")
+	flag.StringVar(&config.Destination, "d", "", "Destination path (supports placeholders: {name}, {idx}, {date})")
+	flag.StringVar(&config.Destination, "destination", "", "Destination path (supports placeholders: {name}, {idx}, {date})")
 	flag.StringVar(&config.From, "f", "", "Source codec (jpeg, png, heic)")
 	flag.StringVar(&config.From, "from", "", "Source codec (jpeg, png, heic)")
 	flag.StringVar(&config.To, "t", "", "Destination codec (jpeg, png, heic)")
 	flag.StringVar(&config.To, "to", "", "Destination codec (jpeg, png, heic)")
 	flag.BoolVar(&config.Interactive, "i", false, "Launch interactive version")
 	flag.BoolVar(&config.Interactive, "interactive", false, "Launch interactive version")
-	
+
 	help := flag.Bool("h", false, "Print help text")
 	flag.BoolVar(help, "help", false, "Print help text")
 	version := flag.Bool("v", false, "Print version")
@@ -63,13 +64,7 @@ func main() {
 			printHelp()
 			os.Exit(1)
 		}
-		err := convert(config)
-		if err != nil {
-			fmt.Printf("Error: %v\n", err)
-			os.Exit(1)
-		}
-		absPath, _ := filepath.Abs(config.Destination)
-		fmt.Printf("Conversion successful: %s\n", absPath)
+		runBatch(config)
 	}
 }
 
@@ -77,24 +72,29 @@ func printHelp() {
 	fmt.Println("atlas.convert - Image conversion tool")
 	fmt.Println("\nUsage:")
 	fmt.Println("  atlas.convert [flags]")
+	fmt.Println("\nBatch & Glob Examples:")
+	fmt.Println("  atlas.convert -s \"*.heic\" -d \"outputs/\" -t png")
+	fmt.Println("  atlas.convert -s \"raw/*.png\" -d \"processed/{name}_web.jpg\" -t jpeg")
+	fmt.Println("  atlas.convert -s \"images/\" -d \"out/{idx}_img.png\" -f jpg -t png")
+	fmt.Println("\nPlaceholders:")
+	fmt.Println("  {name}   Original filename without extension")
+	fmt.Println("  {idx}    Sequence index (0, 1, 2...)")
+	fmt.Println("  {date}   Current date (YYYY-MM-DD)")
 	fmt.Println("\nFlags:")
 	fmt.Println("  -h, --help          Print help text")
 	fmt.Println("  -v, --version       Print version")
 	fmt.Println("  -i, --interactive   Launch the interactive version")
-	fmt.Println("  -s, --source        Source media path")
-	fmt.Println("  -d, --destination   Destination path")
-	fmt.Println("  -f, --from          Source codec (jpeg, png, heic)")
-	fmt.Println("  -t, --to            Destination codec (jpeg, png, heic)")
+	flag.PrintDefaults()
 }
 
 func runInteractive(config *Config) {
 	reader := bufio.NewReader(os.Stdin)
 
-	fmt.Print("Source path: ")
+	fmt.Print("Source path (can be glob or dir): ")
 	config.Source, _ = reader.ReadString('\n')
 	config.Source = strings.TrimSpace(config.Source)
 
-	fmt.Print("Destination path: ")
+	fmt.Print("Destination path (can be dir or pattern): ")
 	config.Destination, _ = reader.ReadString('\n')
 	config.Destination = strings.TrimSpace(config.Destination)
 
@@ -106,49 +106,120 @@ func runInteractive(config *Config) {
 	config.To, _ = reader.ReadString('\n')
 	config.To = strings.TrimSpace(config.To)
 
-	err := convert(*config)
-	if err != nil {
-		fmt.Printf("Error during conversion: %v\n", err)
-	} else {
-		absPath, _ := filepath.Abs(config.Destination)
-		fmt.Printf("Conversion successful: %s\n", absPath)
-	}
+	runBatch(*config)
 }
 
-func convert(config Config) error {
-	srcFile, err := os.Open(config.Source)
+func runBatch(config Config) {
+	files, err := resolveSourceFiles(config.Source, config.From)
 	if err != nil {
-		return fmt.Errorf("failed to open source: %w", err)
+		fmt.Printf("Error resolving source files: %v\n", err)
+		return
+	}
+
+	if len(files) == 0 {
+		fmt.Println("No matching source files found.")
+		return
+	}
+
+	fmt.Printf("Processing %d files...\n", len(files))
+
+	successCount := 0
+	for i, srcPath := range files {
+		destPath := resolveDestPath(srcPath, config.Destination, config.To, i)
+
+		// Create parent directory if it doesn't exist
+		destDir := filepath.Dir(destPath)
+		if _, err := os.Stat(destDir); os.IsNotExist(err) {
+			os.MkdirAll(destDir, 0755)
+		}
+
+		err := convertSingle(srcPath, destPath, config.To)
+		if err != nil {
+			fmt.Printf("[%d/%d] ❌ Failed %s: %v\n", i+1, len(files), srcPath, err)
+		} else {
+			absDest, _ := filepath.Abs(destPath)
+			fmt.Printf("[%d/%d] ✅ Converted: %s\n", i+1, len(files), absDest)
+			successCount++
+		}
+	}
+
+	fmt.Printf("\nDone! Successfully converted %d/%d files.\n", successCount, len(files))
+}
+
+func resolveSourceFiles(source, from string) ([]string, error) {
+	// Check if it's a directory
+	info, err := os.Stat(source)
+	if err == nil && info.IsDir() {
+		ext := "." + strings.ToLower(from)
+		if from == "jpeg" {
+			ext = ".jpg" // Standardize
+		}
+		
+		var files []string
+		entries, _ := os.ReadDir(source)
+		for _, entry := range entries {
+			if !entry.IsDir() && (strings.ToLower(filepath.Ext(entry.Name())) == ext || (from == "jpeg" && strings.ToLower(filepath.Ext(entry.Name())) == ".jpeg")) {
+				files = append(files, filepath.Join(source, entry.Name()))
+			}
+		}
+		return files, nil
+	}
+
+	// Try glob
+	return filepath.Glob(source)
+}
+
+func resolveDestPath(srcPath, destPattern, toExt string, index int) string {
+	// If destPattern is an existing directory or ends in a slash, treat it as a folder
+	if strings.HasSuffix(destPattern, "/") || strings.HasSuffix(destPattern, "\\") {
+		name := strings.TrimSuffix(filepath.Base(srcPath), filepath.Ext(srcPath))
+		return filepath.Join(destPattern, name+"."+toExt)
+	}
+
+	info, err := os.Stat(destPattern)
+	if err == nil && info.IsDir() {
+		name := strings.TrimSuffix(filepath.Base(srcPath), filepath.Ext(srcPath))
+		return filepath.Join(destPattern, name+"."+toExt)
+	}
+
+	// Apply placeholders
+	name := strings.TrimSuffix(filepath.Base(srcPath), filepath.Ext(srcPath))
+	res := strings.ReplaceAll(destPattern, "{name}", name)
+	res = strings.ReplaceAll(res, "{idx}", fmt.Sprintf("%d", index))
+	res = strings.ReplaceAll(res, "{date}", time.Now().Format("2006-01-02"))
+
+	// Ensure extension if not provided in pattern
+	if filepath.Ext(res) == "" {
+		res += "." + toExt
+	}
+
+	return res
+}
+
+func convertSingle(srcPath, destPath, toExt string) error {
+	srcFile, err := os.Open(srcPath)
+	if err != nil {
+		return err
 	}
 	defer srcFile.Close()
 
-	// Using image.Decode which uses registered decoders (including gen2brain/heic)
 	img, _, err := image.Decode(srcFile)
 	if err != nil {
-		return fmt.Errorf("failed to decode image: %w", err)
+		return err
 	}
 
-	destFile, err := os.Create(config.Destination)
+	destFile, err := os.Create(destPath)
 	if err != nil {
-		return fmt.Errorf("failed to create destination: %w", err)
+		return err
 	}
 	defer destFile.Close()
 
-	to := strings.ToLower(config.To)
-	switch to {
+	switch strings.ToLower(toExt) {
 	case "jpeg", "jpg":
-		err = jpeg.Encode(destFile, img, nil)
+		return jpeg.Encode(destFile, img, nil)
 	case "png":
-		err = png.Encode(destFile, img)
-	case "heic":
-		return fmt.Errorf("encoding to HEIC is not supported yet")
+		return png.Encode(destFile, img)
 	default:
-		return fmt.Errorf("unsupported destination format: %s", to)
+		return fmt.Errorf("unsupported destination format: %s", toExt)
 	}
-
-	if err != nil {
-		return fmt.Errorf("failed to encode %s: %w", to, err)
-	}
-
-	return nil
 }
