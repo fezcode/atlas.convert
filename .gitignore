@@ -16,3 +16,5 @@ build/
 # Dependencies
 # go.sum is usually committed, but vendor/ is not
 vendor/
+
+.claude
