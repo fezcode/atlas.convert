@@ -126,7 +126,7 @@ func main() {
 	flag.Parse()
 
 	if *version {
-		fmt.Printf("%s %s\n", c(bold+cyan, "atlas.convert"), c(dim, "v"+Version))
+		fmt.Printf("atlas.convert v%s\n", Version)
 		return
 	}
 
