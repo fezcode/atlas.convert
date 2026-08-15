@@ -1,9 +1,9 @@
 github.com/ebitengine/purego v0.9.1 h1:a/k2f2HQU3Pi399RPW1MOaZyhKJL9w/xFpKAg4q1s0A=
 github.com/ebitengine/purego v0.9.1/go.mod h1:iIjxzd6CiRiOG0UyXP+V1+jWqUXVjPKLAI0mRfJZTmQ=
-github.com/fezcode/go-piml v1.2.1 h1:IW71Q6vEjyzpkeMvV1wkgP8w/ucObXXF5WDEaadMQSE=
-github.com/fezcode/go-piml v1.2.1/go.mod h1:GbFMPCBsrUoNZnG3JzTr7BwbIeMucPs70LuvkgxJYdQ=
-github.com/fezcode/gobake v0.3.0 h1:wYw1EXHoUjpYXzG7MUgE5ohKxZ+XXYu2Vdf5wsKhKE8=
-github.com/fezcode/gobake v0.3.0/go.mod h1:xLBhJdcq4K9Fv2rV+hlTXnUa9sB7q/qHQfQlqfmQuWo=
+github.com/fezcode/go-piml v1.3.0 h1:YiG77ZaZG0gZejYiX1HRuPrIC6jbnwcu8FQQblSYySo=
+github.com/fezcode/go-piml v1.3.0/go.mod h1:GbFMPCBsrUoNZnG3JzTr7BwbIeMucPs70LuvkgxJYdQ=
+github.com/fezcode/gobake v0.5.0 h1:As4T9xAfZRWxPHjXCGq/wcjPXFmu9HTjLENX7ynfZeA=
+github.com/fezcode/gobake v0.5.0/go.mod h1:LaJwPyNkup25v2XijdGTc0ThurM2Di2FpD6n5Ti+/T0=
 github.com/gen2brain/heic v0.4.9 h1:sHM7kjMV2+AlrSfYNsJiD0NrqAJqIMWAOqMSZ0HXrU8=
 github.com/gen2brain/heic v0.4.9/go.mod h1:0/0SrVQnUhOA3ekFY5/lApZYniF/DsgS3g9COWe83dM=
 github.com/tetratelabs/wazero v1.9.0 h1:IcZ56OuxrtaEz8UYNRHBrUa9bYeX9oVY93KspZZBf/I=
